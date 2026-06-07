@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Dashboard Monitoring Komposter</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+    font-family: Arial, sans-serif;
+    margin:20px;
+    background:#f5f5f5;
+}
+
+h1{
+    text-align:center;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    text-align:center;
+}
+
+.card h2{
+    margin:0;
+    font-size:18px;
+}
+
+.card p{
+    font-size:28px;
+    margin-top:10px;
+    font-weight:bold;
+}
+
+.chart-container{
+    background:white;
+    padding:20px;
+    margin-bottom:20px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+canvas{
+    max-height:300px;
+}
+
+</style>
+
+</head>
+<body>
+
+<h1>Dashboard Monitoring Komposter</h1>
+
+<div class="cards">
+
+    <div class="card">
+        <h2>MQ135</h2>
+        <p id="mq135Value">-</p>
+    </div>
+
+    <div class="card">
+        <h2>Suhu (°C)</h2>
+        <p id="tempValue">-</p>
+    </div>
+
+    <div class="card">
+        <h2>Kelembapan (%)</h2>
+        <p id="humValue">-</p>
+    </div>
+
+</div>
+
+<div class="chart-container">
+    <h2>MQ135</h2>
+    <canvas id="mqChart"></canvas>
+</div>
+
+<div class="chart-container">
+    <h2>Temperatur</h2>
+    <canvas id="tempChart"></canvas>
+</div>
+
+<div class="chart-container">
+    <h2>Kelembapan</h2>
+    <canvas id="humChart"></canvas>
+</div>
+
+<script>
+
+/* =====================================================
+   GANTI DENGAN LINK APPS SCRIPT KAMU
+===================================================== */
+
+const API_BASE =
+"https://script.google.com/macros/s/AKfycbzNrBT80CSewUjAX7cUniRNOn6C8eGYfAMjwZENkEjgX7vVc6JLr8sUYKxks8CTBj_0/exec";
+
+const API_LATEST =
+`${API_BASE}?action=latest`;
+
+const API_HISTORY =
+`${API_BASE}?action=history`;
+
+
+/* =====================================================
+   CHARTS
+===================================================== */
+
+const mqChart = new Chart(
+document.getElementById('mqChart'),
+{
+    type:'line',
+    data:{
+        labels:[],
+        datasets:[{
+            label:'MQ135',
+            data:[]
+        }]
+    }
+});
+
+const phChart = new Chart(
+document.getElementById('phChart'),
+{
+    type:'line',
+    data:{
+        labels:[],
+        datasets:[{
+            label:'pH',
+            data:[]
+        }]
+    }
+});
+
+const tempChart = new Chart(
+document.getElementById('tempChart'),
+{
+    type:'line',
+    data:{
+        labels:[],
+        datasets:[{
+            label:'Temperatur',
+            data:[]
+        }]
+    }
+});
+
+const humChart = new Chart(
+document.getElementById('humChart'),
+{
+    type:'line',
+    data:{
+        labels:[],
+        datasets:[{
+            label:'Kelembapan',
+            data:[]
+        }]
+    }
+});
+
+
+/* =====================================================
+   UPDATE CARD TERBARU
+===================================================== */
+
+async function updateLatest(){
+
+    try{
+
+        const response =
+            await fetch(API_LATEST);
+
+        const data =
+            await response.json();
+
+        document.getElementById("mq135Value").innerText =
+            data.mq135;
+
+        document.getElementById("phValue").innerText =
+            Number(data.ph).toFixed(2);
+
+        document.getElementById("tempValue").innerText =
+            Number(data.temp).toFixed(1);
+
+        document.getElementById("humValue").innerText =
+            Number(data.hum).toFixed(1);
+
+    }
+    catch(err){
+        console.error(err);
+    }
+
+}
+
+
+/* =====================================================
+   UPDATE GRAFIK
+===================================================== */
+
+async function updateHistory(){
+
+    try{
+
+        const response =
+            await fetch(API_HISTORY);
+
+        const data =
+            await response.json();
+
+        const labels =
+            data.map(item =>
+                new Date(item.timestamp)
+                .toLocaleTimeString()
+            );
+
+        mqChart.data.labels = labels;
+        mqChart.data.datasets[0].data =
+            data.map(item => item.mq135);
+        mqChart.update();
+
+        phChart.data.labels = labels;
+        phChart.data.datasets[0].data =
+            data.map(item => item.ph);
+        phChart.update();
+
+        tempChart.data.labels = labels;
+        tempChart.data.datasets[0].data =
+            data.map(item => item.temp);
+        tempChart.update();
+
+        humChart.data.labels = labels;
+        humChart.data.datasets[0].data =
+            data.map(item => item.hum);
+        humChart.update();
+
+    }
+    catch(err){
+        console.error(err);
+    }
+
+}
+
+
+/* =====================================================
+   INITIAL LOAD
+===================================================== */
+
+updateLatest();
+updateHistory();
+
+
+/* =====================================================
+   AUTO REFRESH
+===================================================== */
+
+setInterval(() => {
+
+    updateLatest();
+    updateHistory();
+
+}, 5000);
+
+</script>
+
+</body>
+</html>
