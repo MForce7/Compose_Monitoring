@@ -189,9 +189,6 @@ async function updateLatest(){
         document.getElementById("mq135Value").innerText =
             data.mq135;
 
-        document.getElementById("phValue").innerText =
-            Number(data.ph).toFixed(2);
-
         document.getElementById("tempValue").innerText =
             Number(data.temp).toFixed(1);
 
@@ -230,11 +227,6 @@ async function updateHistory(){
         mqChart.data.datasets[0].data =
             data.map(item => item.mq135);
         mqChart.update();
-
-        phChart.data.labels = labels;
-        phChart.data.datasets[0].data =
-            data.map(item => item.ph);
-        phChart.update();
 
         tempChart.data.labels = labels;
         tempChart.data.datasets[0].data =
